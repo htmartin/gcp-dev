@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+export DEBIAN_FRONTEND=noninteractive
+
+install_xfce4_desktop() {
+  echo "installing xfce4 desktop"
+  apt-get -qqy install xfce4 desktop-base
+
+  # alternatively install `xubuntu-desktop` (which includes xfce4)
+
+  rm -f /etc/xdg/autostart/{light-locker,xscreensaver}.desktop
+}
+
+install_cinnamon_desktop() {
+  echo "installing cinnamon desktop"
+  apt-get -qqy install cinnamon-desktop-environment
+
+  # disable the screensaver
+  apt-get -y purge gnome-screensaver
+  chmod -wx /usr/bin/cinnamon-screensaver
+}
+
+install_plasma_desktop() {
+  echo "installing plasma desktop"
+  apt-get -qqy install kde-plasma-desktop
+
+  # optionally install either `kde-standard` or `kde-full`
+
+  # fix screenlock "issues"
+  mkdir -p /etc/skel/.config
+  cat <<- 'EOS' > /etc/skel/.config/kscreenlockerrc
+[Daemon]
+Autolock[$i]=false
+LockOnResume[$i]=false
+EOS
+}
+
+install_kubuntu_desktop() {
+  echo "installing kubuntu desktop"
+  apt-get -qqy install kubuntu-desktop
+
+  # optionally install either `kde-standard` or `kde-full`
+
+  # fix screenlock "issues"
+  cat <<- 'EOS' > /etc/skel/.config/kscreenlockerrc
+[Daemon]
+Autolock[$i]=false
+LockOnResume[$i]=false
+EOS
+
+  # requires password auth to manage networkmanager... no need on the cloud
+  apt-get -y purge plasma-nm
+}
+
+install_gnome_desktop() {
+  echo "installing gnome desktop"
+  apt-get -qqy install ubuntu-desktop-minimal
+
+  # alternatively just install a minimal gnome desktop by installing `gnome-session` and `gnome-terminal`
+
+  systemctl set-default graphical.target
+
+  # fix screensaver lock
+  mkdir -p /etc/dconf/db/local.d/
+  cat <<- 'EOS' > /etc/dconf/db/local.d/00-screensaver
+[org/gnome/desktop/session]
+idle-delay=uint32 0
+
+[org/gnome/desktop/screensaver]
+lock-enabled=false
+lock-delay=uint32 0
+EOS
+
+  # make that mandatory
+  mkdir -p /etc/dconf/db/local.d/locks/
+  cat <<- 'EOS' > /etc/dconf/db/local.d/locks/screensaver
+/org/gnome/desktop/session/idle-delay
+/org/gnome/desktop/screensaver/lock-enabled
+/org/gnome/desktop/screensaver/lock-delay
+EOS
+
+  # fix polkit "issues"
+  cat <<- 'EOS' > /etc/polkit-1/localauthority.conf.d/02-allow-colord.conf
+polkit.addRule(function(action, subject) {
+ if ((action.id == "org.freedesktop.color-manager.create-device" ||
+ action.id == "org.freedesktop.color-manager.create-profile" ||
+ action.id == "org.freedesktop.color-manager.delete-device" ||
+ action.id == "org.freedesktop.color-manager.delete-profile" ||
+ action.id == "org.freedesktop.color-manager.modify-device" ||
+ action.id == "org.freedesktop.color-manager.modify-profile") &&
+ subject.isInGroup("{users}")) {
+ return polkit.Result.YES;
+ }
+});
+EOS
+
+}
+
+# others...
+# apt install ubuntu-mate-desktop
+# apt install lxde
+# apt install lxqt
+# apt install ubuntu-budgie-desktop
+#
+# note that choices can be managed using `update-alternatives`
+# a la https://bytexd.com/switch-desktop-environments-ubuntu-debian-commandline/
+#
+case "$DESKTOP" in
+  "kubuntu") install_kubuntu_desktop
+    ;;
+  "plasma") install_plasma_desktop
+    ;;
+  "cinnamon") install_cinnamon_desktop
+    ;;
+  "xfce4") install_xfce4_desktop
+    ;;
+  "gnome") install_gnome_desktop
+    ;;
+  *) echo "no desktop specified"
+    ;;
+esac
