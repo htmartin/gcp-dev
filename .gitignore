@@ -15,3 +15,4 @@ discourse
 .ropeproject
 *.pyc
 *.log
+*.pem
