@@ -16,3 +16,4 @@ discourse
 *.pyc
 *.log
 *.pem
+packer/variables.json
