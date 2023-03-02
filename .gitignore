@@ -1,0 +1,17 @@
+tmp
+
+.envrc
+
+.terraform
+*.tfvars
+
+backend.tf
+terraform/backends/*.tf
+
+*.tar.gz
+
+discourse
+
+.ropeproject
+*.pyc
+*.log
