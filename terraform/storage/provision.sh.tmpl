@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get -qq update && apt-get -qqy install \
+    nfs-kernel-server
+
+mount_nvme_device() {
+  local device=$1
+  local target=$2
+  local filesystem=$3
+
+  mkfs.$filesystem $device || echo "failed to format $device with $filesystem"
+
+  mkdir -p $target
+  echo UUID=$(blkid -s UUID -o value $device) $target $filesystem discard,defaults,nofail 0 2 | tee -a /etc/fstab
+
+  mount $target || echo "failed to mount $device on $target"
+}
+nvme_device="/dev/disk/by-id/google-local-nvme-ssd-0"
+[ -b "$nvme_device" ] && mount_nvme_device $nvme_device "/scratch" "ext4"
+
+mount_pd_device() {
+  local device=$1
+  local target=$2
+  local filesystem=$3
+
+  mkfs.$filesystem $device || echo "failed to format $device with $filesystem"
+
+  mkdir -p $target
+  echo UUID=$(blkid -s UUID -o value $device) $target $filesystem discard,defaults,nofail 0 2 | tee -a /etc/fstab
+
+  mount $target || echo "failed to mount $device on $target"
+}
+tools_volume="/dev/disk/by-id/google-tools"
+[ -b "$tools_volume" ] && mount_pd_device $tools_volume "/srv/tools" "xfs"
+home_volume="/dev/disk/by-id/google-home"
+[ -b "$home_volume" ] && mount_pd_device $home_volume "/srv/home" "xfs"
+
+export_volume() {
+  local volume=$1
+
+  echo "$volume *(rw,sync,no_subtree_check,no_root_squash)" | tee -a /etc/exports
+  chmod 777 $volume
+}
+export_volume "/srv/home"
+export_volume "/srv/tools"
+exportfs -a
