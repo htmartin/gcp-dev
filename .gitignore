@@ -5,8 +5,7 @@ tmp
 .terraform
 *.tfvars
 
-backend.tf
-terraform/backends/*.tf
+backend.conf
 
 *.tar.gz
 
