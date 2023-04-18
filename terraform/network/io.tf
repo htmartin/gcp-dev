@@ -26,5 +26,21 @@ variable "tags" {
 }
 
 variable "network" {
-  default = "default"
+  default = "tutorial"
+}
+
+variable "subnet" {
+  default = "tutorial"
+}
+
+variable "cidr" {
+  default = "10.2.1.0/24"
+}
+
+output "network_id" {
+  value = google_compute_network.tutorial.id
+}
+
+output "subnet_id" {
+  value = google_compute_subnetwork.tutorial.id
 }
