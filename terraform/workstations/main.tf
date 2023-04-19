@@ -41,9 +41,12 @@ resource "google_compute_instance" "dev" {
 
     }
   }
-  scratch_disk {
-    interface = "NVME" # Note: check if your OS image requires additional drivers or config to optimize NVME performance
-  }
+
+  # cannot stop instances that have nvme attachments, so just get rid of this
+  # scratch_disk {
+  #   interface = "NVME" # Note: check if your OS image requires additional drivers or config to optimize NVME performance
+  # }
+
   metadata = {
     enable-oslogin = "TRUE"
   }
