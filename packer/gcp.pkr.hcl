@@ -29,6 +29,10 @@ source "googlecompute" "gcp_ubuntu" {
   source_image_family = "ubuntu-2004-lts"
   ssh_username        = "packer"
   zone                = "us-central1-f"
+  network             = "tutorial"
+  subnetwork          = "tutorial"
+  omit_external_ip    = true
+  use_internal_ip     = true
 }
 
 build {

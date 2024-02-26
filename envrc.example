@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright 2023 Google LLC
 #
@@ -12,19 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-variable "zone" {
-  default = "us-central1-c"
-}
-
-variable "network" {
-  default = "tutorial"
-}
-
-variable "tags" {
-  default = []
-}
-
-output "storage-node-ip-address" {
-  value = google_compute_instance.storage-node.0.network_interface.0.network_ip
-}
+#
+export GOOGLE_CLOUD_PROJECT="my-cool-project-name"
+export TF_STATE_BUCKET="my-cool-bucket-name"

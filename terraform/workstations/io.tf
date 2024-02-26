@@ -25,5 +25,5 @@ variable "tags" {
 }
 
 variable "network" {
-  default = "default"
+  default = "tutorial"
 }
